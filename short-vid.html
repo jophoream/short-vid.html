@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ancient Mysteries Studio Pro - Indonesian Edition</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #070707; color: #e8e0d0; font-family: Georgia, serif; }
+    @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    textarea:focus, input:focus, select:focus { outline: none; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #111; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(201,168,76,0.15); }
+    th { background: rgba(201,168,76,0.1); color: #c9a84c; font-weight: bold; font-size: 11px; }
+    td { font-size: 13px; color: #c0b89a; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const SYSTEM_PROMPT_INDONESIAN = `Kamu adalah AI Sutradara, Scriptwriter, dan Prompt Engineer profesional untuk akun TikTok @hiddennusantarafiles. 
+
+Tugasmu adalah menghasilkan skrip video TikTok pendek yang VIRAL dengan aturan ketat berikut:
+
+IMPORTANT: Output HANYA dalam format JSON berikut, tanpa markdown atau penjelasan tambahan:
+
+{
+  "title": "Judul video TikTok yang catchy dan memicu curiosity gap",
+  "opening_hook": "Kalimat pembuka ekstrem/kontradiktif/misterius (maks 12 kata)",
+  "facebook_caption": "Caption untuk Facebook dengan emojis, 3-4 kalimat, diakhiri pertanyaan",
+  "scenes": [
+    {
+      "id": 1,
+      "duration": "0:00-0:03",
+      "narasi": "Kalimat narasi pendek 8-12 kata saja",
+      "image_prompt": "Cinematic, dark atmospheric, mysterious, ultra-realistic detail, volumetric lighting, chiaroscuro, with authentic Indonesian/Nusantara cultural elements, 9:16 aspect ratio",
+      "animasi_kamera": "Deskripsi gerakan kamera (Pan, Zoom, Ken Burns effect, dolly, dll)"
+    }
+  ],
+  "ending_hook": "Pertanyaan terbuka atau statement gantung yang memicu komentar/debate",
+  "tags": ["hashtag", "relevan"]
+}
+
+ATURAN KETAT YANG WAJIB DIPATUHI:
+
+1. THE 3-SECOND RULE: Scene 01 WAJIB berupa visual hook paling ekstrem dan narasi pembuka yang kontradiktif atau misterius. Harus bisa menghentikan jempol penonton dalam 3 detik. Jangan membuka dengan formal atau perlahan.
+
+2. RETENSI DURASI: Setiap scene hanya 2.5-3.5 detik. Narasi per scene maksimal 8-12 kata saja agar dinamis. Visual harus berganti cepat supaya penonton tetap engaged dan tidak scroll keluar.
+
+3. ENGAGEMENT TRIGGER: Di scene terakhir wajib ada pertanyaan terbuka atau statement gantung yang memancing penonton untuk mengetik teori di kolom komentar. Contoh: "Tapi cerita berikutnya masih lebih aneh..." atau "Apa yang sebenarnya terjadi?"
+
+4. NUSANTARA VISUAL STYLE: SETIAP 'image_prompt' WAJIB mencakup: "Cinematic, dark atmospheric, mysterious, ultra-realistic detail, volumetric lighting, chiaroscuro, with authentic Indonesian/Nusantara cultural elements, 9:16 aspect ratio". Jangan visual kebarat-baratan atau modern. Fokus pada elemen budaya Indonesia, arsitektur kuno, suasana misterius.
+
+5. STORYTELLING: Gunakan struktur hook-context-mystery-cliffhanger untuk memaksimalkan FYP reach.
+
+Generate exactly 8-10 scenes. Setiap scene SINGKAT dan IMPACTFUL. Jangan bertele-tele.`;
+
+    const SYSTEM_PROMPT_ENGLISH = `You are a professional TikTok Director, Scriptwriter, and Prompt Engineer for @hiddennusantarafiles.
+
+Generate VIRAL short-form TikTok video scripts following strict rules:
+
+OUTPUT ONLY in this JSON format, no markdown or explanations:
+
+{
+  "title": "Catchy TikTok title that creates curiosity gap",
+  "opening_hook": "Extreme/contradictory/mysterious opening (max 12 words)",
+  "facebook_caption": "Facebook caption with emojis, 3-4 sentences, ends with question",
+  "scenes": [
+    {
+      "id": 1,
+      "duration": "0:00-0:03",
+      "narasi": "Short narration 8-12 words only",
+      "image_prompt": "Cinematic, dark atmospheric, mysterious, ultra-realistic detail, volumetric lighting, chiaroscuro, with authentic Indonesian/Nusantara cultural elements, 9:16 aspect ratio",
+      "animasi_kamera": "Camera movement description (Pan, Zoom, Ken Burns, dolly, etc)"
+    }
+  ],
+  "ending_hook": "Open-ended question or cliffhanger that triggers comments/debate",
+  "tags": ["hashtag", "relevant"]
+}
+
+STRICT RULES:
+
+1. THE 3-SECOND RULE: Scene 1 MUST be the most extreme hook with mysterious opening narration. Stop thumbs in 3 seconds. Never start slow or formal.
+
+2. RETENTION DURATION: Each scene 2.5-3.5 seconds only. Narration max 8-12 words per scene for dynamic feel.
+
+3. ENGAGEMENT TRIGGER: Final scene must have open-ended question or cliffhanger that triggers comments.
+
+4. NUSANTARA VISUAL STYLE: Every image prompt MUST include: "Cinematic, dark atmospheric, mysterious, ultra-realistic detail, volumetric lighting, chiaroscuro, with authentic Indonesian/Nusantara cultural elements, 9:16 aspect ratio". Focus on Indonesian cultural elements, ancient architecture, mysterious atmosphere.
+
+5. STORYTELLING: Use hook-context-mystery-cliffhanger structure to maximize FYP reach.
+
+Generate exactly 8-10 scenes. Each scene SHORT and IMPACTFUL.`;
+
+    const gold = "#c9a84c";
+    const dim = "#8a7a60";
+    const bg = "#070707";
+    const border = "rgba(201,168,76,0.15)";
+    const card = "rgba(201,168,76,0.04)";
+    const mono = "'Courier New', monospace";
+
+    const MYSTERY_PRESETS_ID = [
+      "Candi Borobudur Rahasia Tersembunyi",
+      "Pulau Komodo Makhluk Purba",
+      "Prambanan Kutukan Firaun Indonesia",
+      "Raja Ampat Misteri Bawah Laut",
+      "Taman Nasional Ujung Kulon",
+      "Krakatau Ledakan Terdahulu",
+      "Danau Toba Supervolcano",
+      "Moai Nusantara (Patung Batu Bima)",
+      "Labuhan Bajo Portal Dimensi",
+      "Candi Sukuh Ritual Mistis"
+    ];
+
+    const MYSTERY_PRESETS_EN = [
+      "Borobudur Temple Hidden Secrets",
+      "Komodo Island Ancient Creatures",
+      "Prambanan Curse of Pharaohs",
+      "Raja Ampat Underwater Mystery",
+      "Ujung Kulon National Park Anomaly",
+      "Krakatau Biggest Explosion Ever",
+      "Lake Toba Supervolcano Awakening",
+      "Nusantara Moai - Bima Stone Statues",
+      "Labuhan Bajo Dimensional Portal",
+      "Sukuh Temple Mystical Rituals"
+    ];
+
+    function App() {
+      const [apiKey, setApiKey] = useState("");
+      const [apiKeyInput, setApiKeyInput] = useState("");
+      const [showKeyPanel, setShowKeyPanel] = useState(false);
+      const [language, setLanguage] = useState("indonesian"); // indonesian | english
+      const [topic, setTopic] = useState("");
+      const [generating, setGenerating] = useState(false);
+      const [result, setResult] = useState(null);
+      const [error, setError] = useState("");
+      const [copiedId, setCopiedId] = useState(null);
+      const [history, setHistory] = useState([]);
+      const [showHistory, setShowHistory] = useState(false);
+
+      const presets = language === "indonesian" ? MYSTERY_PRESETS_ID : MYSTERY_PRESETS_EN;
+
+      useEffect(() => {
+        const saved = localStorage.getItem("ams-anthropic-key");
+        if (saved) {
+          setApiKey(saved);
+          setApiKeyInput(saved);
+        } else {
+          setShowKeyPanel(true);
+        }
+        
+        const savedHistory = localStorage.getItem("ams-tiktok-history");
+        if (savedHistory) {
+          setHistory(JSON.parse(savedHistory));
+        }
+      }, []);
+
+      const saveKey = () => {
+        const k = apiKeyInput.trim();
+        localStorage.setItem("ams-anthropic-key", k);
+        setApiKey(k);
+        setShowKeyPanel(false);
+      };
+
+      const copy = (text, id) => {
+        navigator.clipboard.writeText(text);
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+      };
+
+      const getSystemPrompt = () => {
+        return language === "indonesian" ? SYSTEM_PROMPT_INDONESIAN : SYSTEM_PROMPT_ENGLISH;
+      };
+
+      const generateScript = async () => {
+        if (!topic.trim()) return;
+        if (!apiKey) { setShowKeyPanel(true); return; }
+        setGenerating(true); 
+        setError(""); 
+        setResult(null);
+        try {
+          const res = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+              "anthropic-dangerous-direct-browser-access": "true",
+            },
+            body: JSON.stringify({
+              model: "claude-sonnet-4-6",
+              max_tokens: 3500,
+              system: getSystemPrompt(),
+              messages: [{ role: "user", content: `Topic: ${topic}\nLanguage: ${language}` }],
+            }),
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error.message);
+          const text = data.content?.[0]?.text || "";
+          const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+          setResult(parsed);
+          
+          // Add to history
+          const newHistory = [
+            { topic, language, timestamp: new Date().toLocaleString(), data: parsed },
+            ...history.filter(h => !(h.topic === topic && h.language === language))
+          ].slice(0, 20);
+          setHistory(newHistory);
+          localStorage.setItem("ams-tiktok-history", JSON.stringify(newHistory));
+        } catch (e) {
+          setError("Generation failed: " + e.message);
+        } finally {
+          setGenerating(false);
+        }
+      };
+
+      const exportToWord = async () => {
+        if (!result) return;
+        
+        const sections = [];
+        
+        sections.push(
+          new window.docx.Paragraph({
+            text: "TIKTOK VIDEO SCRIPT",
+            heading: window.docx.HeadingLevel.HEADING_1,
+            spacing: { after: 200 },
+          })
+        );
+        
+        sections.push(
+          new window.docx.Paragraph({
+            text: `Topic: ${topic}`,
+            spacing: { after: 100 },
+          })
+        );
+        
+        sections.push(
+          new window.docx.Paragraph({
+            text: `Language: ${language === "indonesian" ? "Bahasa Indonesia" : "English"}`,
+            spacing: { after: 100 },
+          })
+        );
+        
+        sections.push(
+          new window.docx.Paragraph({
+            text: `Generated: ${new Date().toLocaleString()}`,
+            spacing: { after: 300 },
+          })
+        );
+
+        // Title
+        sections.push(
+          new window.docx.Paragraph({
+            text: language === "indonesian" ? "JUDUL VIDEO" : "VIDEO TITLE",
+            heading: window.docx.HeadingLevel.HEADING_2,
+            spacing: { after: 100 },
+          })
+        );
+        
+        sections.push(
+          new window.docx.Paragraph({
+            text: result.title,
+            spacing: { after: 300 },
+          })
+        );
+
+        // Opening Hook
+        sections.push(
+          new window.docx.Paragraph({
+            text: language === "indonesian" ? "HOOK PEMBUKA" : "OPENING HOOK",
+            heading: window.docx.HeadingLevel.HEADING_2,
+            spacing: { after: 100 },
+          })
+        );
+        
+        sections.push(
+          new window.docx.Paragraph({
+            text: result.opening_hook,
+            spacing: { after: 300 },
+            italics: true,
+          })
+        );
+
+        // Ending Hook
+        sections.push(
+          new window.docx.Paragraph({
+            text: language === "indonesian" ? "HOOK PENUTUP / CTA" : "ENDING HOOK / CTA",
+            heading: window.docx.HeadingLevel.HEADING_2,
+            spacing: { after: 100 },
+          })
+        );
+        
+        sections.push(
+          new window.docx.Paragraph({
+            text: result.ending_hook,
+            spacing: { after: 300 },
+          })
+        );
+
+        // Scenes Table
+        sections.push(
+          new window.docx.Paragraph({
+            text: language === "indonesian" ? "SCENE BREAKDOWN (Format Tabel)" : "SCENE BREAKDOWN (Table Format)",
+            heading: window.docx.HeadingLevel.HEADING_2,
+            spacing: { after: 200 },
+          })
+        );
+
+        const tableRows = [
+          new window.docx.TableRow({
+            children: [
+              new window.docx.TableCell({ children: [new window.docx.Paragraph({ text: "Scene", bold: true })] }),
+              new window.docx.TableCell({ children: [new window.docx.Paragraph({ text: "Duration", bold: true })] }),
+              new window.docx.TableCell({ children: [new window.docx.Paragraph({ text: language === "indonesian" ? "Narasi" : "Narration", bold: true })] }),
+              new window.docx.TableCell({ children: [new window.docx.Paragraph({ text: language === "indonesian" ? "Prompt Gambar" : "Image Prompt", bold: true })] }),
+              new window.docx.TableCell({ children: [new window.docx.Paragraph({ text: language === "indonesian" ? "Animasi Kamera" : "Camera Animation", bold: true })] }),
+            ],
+          }),
+        ];
+
+        result.scenes?.forEach((scene) => {
+          tableRows.push(
+            new window.docx.TableRow({
+              children: [
+                new window.docx.TableCell({ children: [new window.docx.Paragraph({ text: `${scene.id}` })] }),
+                new window.docx.TableCell({ children: [new window.docx.Paragraph({ text: scene.duration })] }),
+                new window.docx.TableCell({ children: [new window.docx.Paragraph({ text: scene.narasi })] }),
+                new window.docx.TableCell({ children: [new window.docx.Paragraph({ text: scene.image_prompt, style: "Normal" })] }),
+                new window.docx.TableCell({ children: [new window.docx.Paragraph({ text: scene.animasi_kamera })] }),
+              ],
+            })
+          );
+        });
+
+        sections.push(new window.docx.Table({ rows: tableRows, width: { size: 100, type: window.docx.WidthType.PERCENTAGE } }));
+
+        sections.push(
+          new window.docx.Paragraph({
+            text: "",
+            spacing: { after: 200 },
+          })
+        );
+
+        // Social Media
+        sections.push(
+          new window.docx.Paragraph({
+            text: language === "indonesian" ? "KONTEN MEDIA SOSIAL" : "SOCIAL MEDIA CONTENT",
+            heading: window.docx.HeadingLevel.HEADING_2,
+            spacing: { after: 100 },
+          })
+        );
+
+        sections.push(
+          new window.docx.Paragraph({
+            text: language === "indonesian" ? "Caption Facebook:" : "Facebook Caption:",
+            bold: true,
+            spacing: { after: 50 },
+          })
+        );
+
+        sections.push(
+          new window.docx.Paragraph({
+            text: result.facebook_caption,
+            spacing: { after: 200 },
+          })
+        );
+
+        sections.push(
+          new window.docx.Paragraph({
+            text: language === "indonesian" ? "Hashtag:" : "Hashtags:",
+            bold: true,
+            spacing: { after: 50 },
+          })
+        );
+
+        sections.push(
+          new window.docx.Paragraph({
+            text: result.tags?.join(" ") || "",
+            spacing: { after: 200 },
+          })
+        );
+
+        const doc = new window.docx.Document({
+          sections: [{
+            properties: {},
+            children: sections,
+          }],
+        });
+
+        window.docx.Packer.toBlob(doc).then((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `${topic.replace(/\s+/g, "-")}-${language}-${Date.now()}.docx`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        });
+      };
+
+      const CopyBtn = ({ text, id }) => (
+        <button
+          onClick={() => copy(text, id)}
+          style={{
+            background: copiedId === id ? gold : "rgba(201,168,76,0.1)",
+            border: `1px solid ${gold}`,
+            color: copiedId === id ? bg : gold,
+            padding: "4px 12px", borderRadius: 4, fontSize: 10,
+            cursor: "pointer", fontFamily: mono, letterSpacing: "0.05em",
+            transition: "all 0.2s", flexShrink: 0,
+          }}
+        >
+          {copiedId === id ? "✓ COPIED" : "COPY"}
+        </button>
+      );
+
+      return (
+        <div style={{ minHeight: "100vh", background: bg, color: "#e8e0d0", fontFamily: "Georgia, serif", backgroundImage: "radial-gradient(ellipse at 20% 20%, rgba(139,90,30,0.07) 0%, transparent 60%)" }}>
+          <style>{`
+            @keyframes slideIn { 
+              from { opacity: 0; transform: translateY(-10px); } 
+              to { opacity: 1; transform: translateY(0); } 
+            }
+            .history-item { animation: slideIn 0.3s ease-out; }
+          `}</style>
+
+          {/* Header */}
+          <div style={{ borderBottom: `1px solid ${border}`, padding: "20px 28px", background: card }}>
+            <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 3 }}>
+                  <span style={{ fontSize: 18, color: gold }}>◈</span>
+                  <h1 style={{ margin: 0, fontSize: 18, fontWeight: "normal", letterSpacing: "0.18em", color: gold, textTransform: "uppercase" }}>
+                    TikTok Studio @hiddennusantarafiles
+                  </h1>
+                </div>
+                <p style={{ margin: 0, fontSize: 11, color: dim, fontFamily: mono, letterSpacing: "0.05em", marginTop: 4 }}>Indonesian Nusantara Mysteries - 3-Second Hook FYP Optimization</p>
+              </div>
+              <div style={{ display: "flex", gap: 12 }}>
+                <button
+                  onClick={() => setShowHistory(!showHistory)}
+                  style={{
+                    background: "rgba(201,168,76,0.1)",
+                    border: `1px solid ${gold}`,
+                    color: gold,
+                    padding: "6px 14px", borderRadius: 4, fontSize: 10,
+                    cursor: "pointer", fontFamily: mono, letterSpacing: "0.05em",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  📋 HISTORY ({history.length})
+                </button>
+                <button
+                  onClick={() => setShowKeyPanel(!showKeyPanel)}
+                  style={{
+                    background: "rgba(201,168,76,0.1)",
+                    border: `1px solid ${gold}`,
+                    color: gold,
+                    padding: "6px 14px", borderRadius: 4, fontSize: 10,
+                    cursor: "pointer", fontFamily: mono, letterSpacing: "0.05em",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  🔑 API KEY
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px" }}>
+            {showKeyPanel && (
+              <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 8, padding: "20px", marginBottom: 20 }}>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ display: "block", fontSize: 10, color: gold, fontFamily: mono, marginBottom: 8, letterSpacing: "0.1em" }}>
+                    ANTHROPIC API KEY
+                  </label>
+                  <input
+                    type="password"
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                    placeholder="sk-ant-..."
+                    style={{
+                      width: "100%", padding: "10px 12px", background: "rgba(0,0,0,0.3)",
+                      border: `1px solid ${border}`, borderRadius: 4, color: "#e8e0d0",
+                      fontFamily: mono, fontSize: 12,
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={saveKey}
+                  style={{
+                    background: gold, color: bg, border: "none", borderRadius: 4,
+                    padding: "8px 20px", fontSize: 11, fontFamily: mono,
+                    cursor: "pointer", fontWeight: "bold", transition: "all 0.2s",
+                  }}
+                >
+                  SAVE & CONTINUE
+                </button>
+              </div>
+            )}
+
+            {showHistory && history.length > 0 && (
+              <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 8, padding: "16px", marginBottom: 20, maxHeight: "300px", overflowY: "auto" }}>
+                <div style={{ fontSize: 10, color: gold, fontFamily: mono, marginBottom: 12, letterSpacing: "0.1em" }}>
+                  GENERATION HISTORY
+                </div>
+                {history.map((item, idx) => (
+                  <div key={idx} className="history-item" style={{
+                    background: "rgba(0,0,0,0.2)", border: `1px solid ${border}`, borderRadius: 4,
+                    padding: "8px 12px", marginBottom: 8, cursor: "pointer",
+                    transition: "all 0.2s",
+                  }} onClick={() => {
+                    setTopic(item.topic);
+                    setLanguage(item.language);
+                    setResult(item.data);
+                    setShowHistory(false);
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div>
+                        <div style={{ fontSize: 12, color: "#e8e0d0" }}>{item.topic}</div>
+                        <div style={{ fontSize: 9, color: dim, marginTop: 2 }}>
+                          {item.language === "indonesian" ? "🇮🇩 Indonesia" : "🇬🇧 English"} • {item.timestamp}
+                        </div>
+                      </div>
+                      <span style={{ color: dim, fontSize: 10 }}>↻</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Input Section */}
+            <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 8, padding: "20px", marginBottom: 20 }}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 10, color: gold, fontFamily: mono, marginBottom: 8, letterSpacing: "0.1em" }}>
+                  LANGUAGE / BAHASA
+                </label>
+                <div style={{ display: "flex", gap: 10 }}>
+                  {[
+                    { value: "indonesian", label: "🇮🇩 Bahasa Indonesia" },
+                    { value: "english", label: "🇬🇧 English" }
+                  ].map(opt => (
+                    <button key={opt.value}
+                      onClick={() => setLanguage(opt.value)}
+                      style={{
+                        background: language === opt.value ? gold : "rgba(201,168,76,0.1)",
+                        color: language === opt.value ? bg : gold,
+                        border: `1px solid ${gold}`,
+                        padding: "8px 16px", borderRadius: 4, fontSize: 11,
+                        cursor: "pointer", fontFamily: mono, fontWeight: language === opt.value ? "bold" : "normal",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 10, color: gold, fontFamily: mono, marginBottom: 8, letterSpacing: "0.1em" }}>
+                  {language === "indonesian" ? "TOPIK / TEMA" : "TOPIC / THEME"}
+                </label>
+                <textarea
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder={language === "indonesian" ? "Cth: Candi Borobudur Rahasia, Danau Toba Misteri..." : "E.g., Borobudur Temple Secret, Lake Toba Mystery..."}
+                  style={{
+                    width: "100%", padding: "12px", background: "rgba(0,0,0,0.3)",
+                    border: `1px solid ${border}`, borderRadius: 4, color: "#e8e0d0",
+                    fontFamily: "Georgia, serif", fontSize: 14, minHeight: 60,
+                    resize: "vertical",
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 10, color: dim, fontFamily: mono, marginBottom: 8, display: "block", letterSpacing: "0.05em" }}>
+                  {language === "indonesian" ? "PRESET CEPAT" : "QUICK PRESETS"}
+                </label>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {presets.map((preset) => (
+                    <button key={preset}
+                      onClick={() => setTopic(preset)}
+                      style={{
+                        background: "rgba(0,0,0,0.2)",
+                        border: `1px solid ${border}`,
+                        color: "#a0907a",
+                        padding: "4px 10px", borderRadius: 3, fontSize: 9,
+                        cursor: "pointer", fontFamily: mono,
+                        transition: "all 0.2s",
+                      }}
+                      onMouseOver={(e) => e.target.style.borderColor = gold}
+                      onMouseOut={(e) => e.target.style.borderColor = border}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  onClick={generateScript}
+                  disabled={generating || !topic.trim()}
+                  style={{
+                    background: generating || !topic.trim() ? "rgba(201,168,76,0.08)" : gold,
+                    color: generating || !topic.trim() ? dim : bg,
+                    border: "none", borderRadius: 6, padding: "10px 28px",
+                    fontSize: 11, fontFamily: mono, letterSpacing: "0.15em",
+                    textTransform: "uppercase", cursor: generating || !topic.trim() ? "not-allowed" : "pointer",
+                    fontWeight: "bold", transition: "all 0.2s",
+                  }}
+                >
+                  {generating ? "◈ GENERATING..." : "◈ GENERATE TIKTOK SCRIPT"}
+                </button>
+                {result && (
+                  <button
+                    onClick={exportToWord}
+                    style={{
+                      background: "rgba(80,150,200,0.15)",
+                      color: "#80aae0",
+                      border: "1px solid rgba(80,150,200,0.3)",
+                      borderRadius: 6, padding: "10px 28px",
+                      fontSize: 11, fontFamily: mono, letterSpacing: "0.15em",
+                      textTransform: "uppercase", cursor: "pointer",
+                      fontWeight: "bold", transition: "all 0.2s",
+                    }}
+                  >
+                    💾 EXPORT TO WORD
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {error && (
+              <div style={{ background: "rgba(180,50,50,0.1)", border: "1px solid rgba(180,50,50,0.3)", borderRadius: 6, padding: "12px 16px", color: "#e08080", fontSize: 13, marginBottom: 18 }}>
+                {error}
+              </div>
+            )}
+
+            {generating && (
+              <div style={{ textAlign: "center", padding: "50px 20px", color: dim }}>
+                <div style={{ fontSize: 30, marginBottom: 12, animation: "pulse 2s infinite" }}>◈</div>
+                <p style={{ fontSize: 11, letterSpacing: "0.12em", fontFamily: mono }}>GENERATING VIRAL TIKTOK SCRIPT...</p>
+              </div>
+            )}
+
+            {result && (
+              <div>
+                {/* Title */}
+                <div style={{ background: "rgba(201,168,76,0.06)", border: "1px solid rgba(201,168,76,0.25)", borderRadius: 8, padding: "15px 20px", marginBottom: 18, display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 9, color: dim, fontFamily: mono, letterSpacing: "0.12em", marginBottom: 5 }}>
+                      {language === "indonesian" ? "JUDUL VIDEO" : "VIDEO TITLE"}
+                    </div>
+                    <div style={{ fontSize: 16, color: gold, lineHeight: 1.4 }}>{result.title}</div>
+                  </div>
+                  <CopyBtn text={result.title} id="title" />
+                </div>
+
+                {/* Opening Hook */}
+                <div style={{ background: "rgba(201,168,76,0.07)", border: "1px solid rgba(201,168,76,0.28)", borderRadius: 8, padding: "16px 18px", marginBottom: 18 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                    <span style={{ fontSize: 9, color: gold, fontFamily: mono, letterSpacing: "0.12em" }}>⚡ {language === "indonesian" ? "HOOK PEMBUKA (3 DETIK)" : "OPENING HOOK (3 SECONDS)"}</span>
+                    <CopyBtn text={result.opening_hook} id="hook" />
+                  </div>
+                  <p style={{ margin: 0, fontSize: 15, lineHeight: 1.85, fontStyle: "italic", color: "#d0c090" }}>"{result.opening_hook}"</p>
+                </div>
+
+                {/* Ending Hook */}
+                <div style={{ background: "rgba(255,180,0,0.08)", border: "1px solid rgba(255,180,0,0.3)", borderRadius: 8, padding: "16px 18px", marginBottom: 18 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                    <span style={{ fontSize: 9, color: "#d4a040", fontFamily: mono, letterSpacing: "0.12em" }}>🎯 {language === "indonesian" ? "HOOK PENUTUP / CTA" : "ENDING HOOK / CTA"}</span>
+                    <CopyBtn text={result.ending_hook} id="ending" />
+                  </div>
+                  <p style={{ margin: 0, fontSize: 14, lineHeight: 1.85, fontStyle: "italic", color: "#ffc060" }}>"{result.ending_hook}"</p>
+                </div>
+
+                {/* Scene Table */}
+                <div style={{ background: "rgba(0,0,0,0.3)", border: `1px solid ${border}`, borderRadius: 8, padding: "16px", marginBottom: 18, overflowX: "auto" }}>
+                  <div style={{ fontSize: 9, color: gold, fontFamily: mono, letterSpacing: "0.12em", marginBottom: 12 }}>
+                    📊 {language === "indonesian" ? "BREAKDOWN SCENE (2.5-3.5s per scene)" : "SCENE BREAKDOWN (2.5-3.5s per scene)"}
+                  </div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th style={{ width: "5%" }}>Scene</th>
+                        <th style={{ width: "10%" }}>{language === "indonesian" ? "Durasi" : "Duration"}</th>
+                        <th style={{ width: "15%" }}>{language === "indonesian" ? "Narasi (8-12 kata)" : "Narration (8-12 words)"}</th>
+                        <th style={{ width: "40%" }}>{language === "indonesian" ? "Prompt Gambar" : "Image Prompt"}</th>
+                        <th style={{ width: "30%" }}>{language === "indonesian" ? "Animasi Kamera" : "Camera Animation"}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.scenes?.map((scene) => (
+                        <tr key={scene.id}>
+                          <td style={{ fontWeight: "bold", color: gold }}>{scene.id}</td>
+                          <td>{scene.duration}</td>
+                          <td style={{ fontStyle: "italic" }}>{scene.narasi}</td>
+                          <td style={{ fontSize: 12, color: "#9aaecc" }}>
+                            <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                              <span>{scene.image_prompt}</span>
+                              <CopyBtn text={scene.image_prompt} id={`img-${scene.id}`} />
+                            </div>
+                          </td>
+                          <td style={{ fontSize: 12, color: "#c0a0d8" }}>
+                            <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                              <span>{scene.animasi_kamera}</span>
+                              <CopyBtn text={scene.animasi_kamera} id={`ani-${scene.id}`} />
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Social Media */}
+                <div style={{ background: "rgba(0,0,0,0.3)", border: `1px solid ${border}`, borderRadius: 8, padding: "16px 18px", marginBottom: 18 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                    <span style={{ fontSize: 9, color: dim, fontFamily: mono, letterSpacing: "0.1em" }}>📱 FACEBOOK CAPTION</span>
+                    <CopyBtn text={result.facebook_caption} id="caption" />
+                  </div>
+                  <p style={{ margin: 0, fontSize: 14, lineHeight: 1.85, color: "#c0b89a", whiteSpace: "pre-wrap" }}>{result.facebook_caption}</p>
+                </div>
+
+                {/* Hashtags */}
+                <div style={{ background: "rgba(0,0,0,0.3)", border: `1px solid ${border}`, borderRadius: 8, padding: "16px 18px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                    <span style={{ fontSize: 9, color: dim, fontFamily: mono, letterSpacing: "0.1em" }}># HASHTAGS</span>
+                    <CopyBtn text={result.tags?.join(" ")} id="tags" />
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {result.tags?.map((tag, i) => (
+                      <span
+                        key={i}
+                        onClick={() => copy(tag, `tag-${i}`)}
+                        style={{ background: "rgba(201,168,76,0.07)", border: `1px solid ${border}`, borderRadius: 4, padding: "4px 10px", fontSize: 11, color: gold, fontFamily: mono, cursor: "pointer" }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
